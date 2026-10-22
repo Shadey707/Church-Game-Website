@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LDS Church Word Search</title>
+  <script src="word_search.js" defer></script>
+  <style>
+    :root { --navy: #17365d; --gold: #c69c3c; --light: #f6f8fb; }
+    body { margin: 0; background: var(--light); color: #1f2937; font-family: Georgia, serif; }
+    main { max-width: 850px; margin: 0 auto; padding: 32px 20px 48px; text-align: center; }
+    h1 { color: var(--navy); margin: 0 0 6px; font-size: 2.3rem; }
+    .subtitle { margin: 0 0 24px; color: #4b5563; font-size: 1.1rem; }
+    .card { background: white; border: 1px solid #d7dee8; border-top: 7px solid var(--gold); border-radius: 12px; padding: 24px; box-shadow: 0 4px 14px #17365d12; }
+    #grid { display: grid; grid-template-columns: repeat(15, 1fr); gap: 3px; max-width: 600px; margin: 0 auto 25px; }
+    .cell { aspect-ratio: 1; display: grid; place-items: center; border: 1px solid #c8d2df; border-radius: 4px; font: 700 clamp(.7rem, 2.3vw, 1.2rem)/1 Arial, sans-serif; color: var(--navy); background: #fff; }
+    .cell.answer { background: #ffe7a8; border-color: var(--gold); }
+    h2 { color: var(--navy); font-size: 1.2rem; margin: 18px 0 10px; }
+    #answer-key { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px 18px; list-style: none; padding: 0; margin: 0 auto 22px; max-width: 560px; font: 700 .95rem Arial, sans-serif; }
+    button { border: 0; border-radius: 6px; padding: 10px 16px; margin: 4px; color: white; background: var(--navy); cursor: pointer; font-weight: 700; }
+    button:hover { background: #24568e; }
+    button.secondary { background: #6b7280; }
+    @media print { body { background: white; } main { padding: 10px; } .card { box-shadow: none; } button { display: none; } .cell { border-color: #555; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>LDS Church Word Search</h1>
+    <p class="subtitle">Find the words hidden across, down, and diagonally.</p>
+    <section class="card">
+      <div id="grid" aria-label="Word search puzzle"></div>
+      <h2>Words to Find</h2>
+      <ul id="answer-key"></ul>
+      <button id="new-puzzle">New Puzzle</button>
+      <button id="show-answers" class="secondary">Show Answers</button>
+    </section>
+  </main>
+</body>
+</html>
