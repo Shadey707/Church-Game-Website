@@ -5,87 +5,200 @@ const WORDS = [
 ];
 
 const SIZE = 15;
+
 const DIRECTIONS = [
   [0, 1], [1, 0], [0, -1], [-1, 0],
   [1, 1], [1, -1], [-1, 1], [-1, -1]
 ];
 
-function makeGrid() {
-  const grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(""));
-  const placements = [];
-  const shuffledWords = [...WORDS].sort(() => Math.random() - 0.5);
+let placements = [];
+let selectedCell = null;
+let foundWords = new Set();
 
-  for (const word of shuffledWords) {
+function makeGrid() {
+  const grid = Array.from(
+    { length: SIZE },
+    () => Array(SIZE).fill("")
+  );
+
+  placements = [];
+
+  for (const word of [...WORDS].sort(() => Math.random() - 0.5)) {
     let placed = false;
+
     for (let attempt = 0; attempt < 1000 && !placed; attempt++) {
-      const [dr, dc] = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
+      const [dr, dc] =
+        DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
+
       const row = Math.floor(Math.random() * SIZE);
       const col = Math.floor(Math.random() * SIZE);
+
       const endRow = row + dr * (word.length - 1);
       const endCol = col + dc * (word.length - 1);
 
-      if (endRow < 0 || endRow >= SIZE || endCol < 0 || endCol >= SIZE) continue;
+      if (
+        endRow < 0 || endRow >= SIZE ||
+        endCol < 0 || endCol >= SIZE
+      ) {
+        continue;
+      }
 
       let valid = true;
+
       for (let i = 0; i < word.length; i++) {
         const r = row + dr * i;
         const c = col + dc * i;
-        if (grid[r][c] && grid[r][c] !== word[i]) valid = false;
+
+        if (grid[r][c] && grid[r][c] !== word[i]) {
+          valid = false;
+        }
       }
+
       if (!valid) continue;
 
       const cells = [];
+
       for (let i = 0; i < word.length; i++) {
         const r = row + dr * i;
         const c = col + dc * i;
+
         grid[r][c] = word[i];
         cells.push(`${r}-${c}`);
       }
+
       placements.push({ word, cells });
       placed = true;
     }
   }
 
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  for (let r = 0; r < SIZE; r++) {
-    for (let c = 0; c < SIZE; c++) {
-      if (!grid[r][c]) grid[r][c] = letters[Math.floor(Math.random() * letters.length)];
+
+  for (let row = 0; row < SIZE; row++) {
+    for (let col = 0; col < SIZE; col++) {
+      if (!grid[row][col]) {
+        grid[row][col] =
+          letters[Math.floor(Math.random() * letters.length)];
+      }
     }
   }
-  return { grid, placements };
+
+  return grid;
 }
 
 function renderPuzzle() {
-  const { grid, placements } = makeGrid();
-  const board = document.querySelector("#grid");
-  const answerKey = document.querySelector("#answer-key");
-  board.innerHTML = "";
-  answerKey.innerHTML = "";
+  const grid = makeGrid();
+  const gridElement = document.querySelector("#grid");
+  const wordsElement = document.querySelector("#words");
+  const status = document.querySelector("#status");
 
-  for (const row of grid) {
-    for (const letter of row) {
-      const cell = document.createElement("span");
+  selectedCell = null;
+  foundWords = new Set();
+
+  gridElement.innerHTML = "";
+  wordsElement.innerHTML = "";
+
+  status.textContent =
+    "Click the first and last letter of a word.";
+
+  for (let row = 0; row < SIZE; row++) {
+    for (let col = 0; col < SIZE; col++) {
+      const cell = document.createElement("div");
+
       cell.className = "cell";
-      cell.textContent = letter;
-      board.appendChild(cell);
+      cell.textContent = grid[row][col];
+      cell.dataset.position = `${row}-${col}`;
+
+      cell.addEventListener("click", () => {
+        selectCell(row, col, cell);
+      });
+
+      gridElement.appendChild(cell);
     }
   }
 
-  for (const placement of placements) {
+  for (const word of WORDS) {
     const item = document.createElement("li");
-    item.textContent = placement.word;
-    answerKey.appendChild(item);
+
+    item.textContent = word;
+    item.dataset.word = word;
+
+    wordsElement.appendChild(item);
+  }
+}
+
+function selectCell(row, col, cell) {
+  const currentCell = `${row}-${col}`;
+
+  if (!selectedCell) {
+    selectedCell = currentCell;
+    cell.classList.add("selected");
+
+    document.querySelector("#status").textContent =
+      "Now click the last letter.";
+
+    return;
   }
 
-  document.querySelector("#show-answers").onclick = () => {
-    document.querySelectorAll(".cell").forEach((cell, index) => {
-      const id = `${Math.floor(index / SIZE)}-${index % SIZE}`;
-      if (placements.some((p) => p.cells.includes(id))) cell.classList.add("answer");
+  const match = placements.find(placement => {
+    const first = placement.cells[0];
+    const last = placement.cells[placement.cells.length - 1];
+
+    return (
+      (first === selectedCell && last === currentCell) ||
+      (last === selectedCell && first === currentCell)
+    );
+  });
+
+  document
+    .querySelectorAll(".selected")
+    .forEach(cell => cell.classList.remove("selected"));
+
+  if (match && !foundWords.has(match.word)) {
+    foundWords.add(match.word);
+
+    match.cells.forEach(position => {
+      document
+        .querySelector(`[data-position="${position}"]`)
+        .classList.add("found");
     });
-  };
+
+    document
+      .querySelector(`[data-word="${match.word}"]`)
+      .classList.add("completed");
+
+    if (foundWords.size === placements.length) {
+      document.querySelector("#status").textContent =
+        "Great job! You found every word!";
+    } else {
+      document.querySelector("#status").textContent =
+        `${foundWords.size} of ${placements.length} words found!`;
+    }
+  } else {
+    document.querySelector("#status").textContent =
+      "That is not a hidden word. Try again.";
+  }
+
+  selectedCell = null;
+}
+
+function showAnswers() {
+  placements.forEach(placement => {
+    placement.cells.forEach(position => {
+      document
+        .querySelector(`[data-position="${position}"]`)
+        .classList.add("found");
+    });
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelector("#new-puzzle").addEventListener("click", renderPuzzle);
+  document
+    .querySelector("#new-puzzle")
+    .addEventListener("click", renderPuzzle);
+
+  document
+    .querySelector("#show-answers")
+    .addEventListener("click", showAnswers);
+
   renderPuzzle();
 });
