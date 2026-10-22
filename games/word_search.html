@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LDS Church Word Search</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 30px;
+      text-align: center;
+      font-family: Georgia, serif;
+      background: #f4f7fb;
+      color: #17365d;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(15, 1fr);
+      gap: 3px;
+      max-width: 600px;
+      margin: 25px auto;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      background: white;
+      border: 1px solid #c8d2df;
+      border-radius: 4px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .cell:hover,
+    .selected {
+      background: #dcecff;
+    }
+
+    .found {
+      background: #bce8c5;
+      color: #185b28;
+      border-color: #39834a;
+    }
+
+    #words {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-width: 550px;
+      margin: 20px auto;
+      padding: 0;
+      list-style: none;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+    }
+
+    .completed {
+      color: green;
+      text-decoration: line-through;
+    }
+
+    button {
+      padding: 10px 16px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      background: #17365d;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>LDS Church Word Search</h1>
+  <p>Click the first and last letter of each hidden word.</p>
+
+  <div id="grid"></div>
+
+  <p id="status">Find all the hidden words!</p>
+
+  <h2>Words to Find</h2>
+  <ul id="words"></ul>
+
+  <button id="new-puzzle">New Puzzle</button>
+  <button id="show-answers">Show Answers</button>
+
+  <script src="lds-word-search.js"></script>
+</body>
+</html>
