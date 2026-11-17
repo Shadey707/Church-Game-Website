@@ -1,3 +1,4 @@
+
 const DEFAULT_WORDS = [
   "FAITH", "TEMPLE", "SCRIPTURE", "PRAYER", "SERVICE",
   "PROPHET", "BAPTISM", "FAMILY", "GOSPEL", "COVENANT",
@@ -9,6 +10,8 @@ const DIRECTIONS = [
   [1, 1], [1, -1], [-1, 1], [-1, -1]
 ];
 
+const LEADERBOARD_KEY = "churchWordSearchLeaderboard";
+
 let puzzle = null;
 let selectedStart = null;
 let isDragging = false;
@@ -17,6 +20,8 @@ let foundWords = new Set();
 let pointerId = null;
 let timerInterval = null;
 let elapsedSeconds = 0;
+let gameMode = "normal";
+let gameFinished = false;
 
 const $ = selector => document.querySelector(selector);
 
@@ -101,11 +106,8 @@ function placeWord(grid, word) {
     }
   }
 
-  if (options.length === 0) {
-    return null;
-  }
+  if (options.length === 0) return null;
 
-  // Prefer placements that share matching letters.
   options.sort((a, b) => b.overlaps - a.overlaps);
 
   const pool = options.slice(0, Math.min(30, options.length));
@@ -137,9 +139,7 @@ function attemptPuzzle(words, size) {
   for (const word of orderedWords) {
     const placement = placeWord(grid, word);
 
-    if (!placement) {
-      return null;
-    }
+    if (!placement) return null;
 
     placements.push(placement);
   }
@@ -174,9 +174,7 @@ function buildPuzzle(words, requestedSize, customMode) {
       for (let attempt = 0; attempt < 12; attempt++) {
         const result = attemptPuzzle(shuffle(words), size);
 
-        if (result) {
-          return result;
-        }
+        if (result) return result;
       }
 
       size++;
@@ -198,15 +196,12 @@ function buildPuzzle(words, requestedSize, customMode) {
     Math.max(3, Math.floor((size * size) / 18))
   );
 
-  // Reduce the number of words if a combination won't fit.
   for (let count = targetCount; count >= 1; count--) {
     for (let attempt = 0; attempt < 18; attempt++) {
       const chosen = shuffle(suitableWords).slice(0, count);
       const result = attemptPuzzle(chosen, size);
 
-      if (result) {
-        return result;
-      }
+      if (result) return result;
     }
   }
 
@@ -273,7 +268,9 @@ function renderPuzzle() {
   updateProgress();
 
   setStatus(
-    "Touch or click and drag from the first letter to the last, then release."
+    gameMode === "timed"
+      ? "Find every word as quickly as you can!"
+      : "Touch or click and drag from the first letter to the last, then release."
   );
 }
 
@@ -284,23 +281,39 @@ function setStatus(message, type = "") {
   status.className = type;
 }
 
-function updateTimerDisplay() {
-  const minutes = Math.floor(elapsedSeconds / 60);
-  const seconds = elapsedSeconds % 60;
+function formatTime(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
 
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function updateTimerDisplay() {
   $("#timer").textContent =
-    `Time: ${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    gameMode === "timed"
+      ? `Time: ${formatTime(elapsedSeconds)}`
+      : "Time: —";
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
+  stopTimer();
+
   elapsedSeconds = 0;
   updateTimerDisplay();
+
+  if (gameMode !== "timed") return;
 
   timerInterval = setInterval(() => {
     elapsedSeconds++;
     updateTimerDisplay();
   }, 1000);
+}
+
+function stopTimer() {
+  if (timerInterval !== null) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
 }
 
 function updateProgress() {
@@ -348,9 +361,7 @@ function getStraightPath(startKey, endKey) {
     Math.abs(colDifference)
   );
 
-  if (steps === 0) {
-    return [startKey];
-  }
+  if (steps === 0) return [startKey];
 
   const dr = Math.sign(rowDifference);
   const dc = Math.sign(colDifference);
@@ -358,10 +369,7 @@ function getStraightPath(startKey, endKey) {
 
   for (let i = 0; i <= steps; i++) {
     path.push(
-      cellKey(
-        startRow + dr * i,
-        startCol + dc * i
-      )
+      cellKey(startRow + dr * i, startCol + dc * i)
     );
   }
 
@@ -380,7 +388,6 @@ function previewPath(endKey) {
   clearPreview();
 
   const path = getStraightPath(selectedStart, endKey);
-
   currentPath = path || [selectedStart, endKey];
 
   for (const key of currentPath) {
@@ -404,9 +411,7 @@ function pathWord(path) {
 function handlePointerDown(event) {
   const cell = event.target.closest("#grid .cell");
 
-  if (!cell || event.button > 0) {
-    return;
-  }
+  if (!cell || event.button > 0 || gameFinished) return;
 
   event.preventDefault();
   resetSelection();
@@ -426,26 +431,17 @@ function handlePointerDown(event) {
 }
 
 function handlePointerMove(event) {
-  if (!isDragging || event.pointerId !== pointerId) {
-    return;
-  }
+  if (!isDragging || event.pointerId !== pointerId) return;
 
   event.preventDefault();
 
-  const cell = getCellFromPoint(
-    event.clientX,
-    event.clientY
-  );
+  const cell = getCellFromPoint(event.clientX, event.clientY);
 
-  if (cell) {
-    previewPath(cell.dataset.position);
-  }
+  if (cell) previewPath(cell.dataset.position);
 }
 
 function handlePointerUp(event) {
-  if (!isDragging || event.pointerId !== pointerId) {
-    return;
-  }
+  if (!isDragging || event.pointerId !== pointerId) return;
 
   event.preventDefault();
 
@@ -499,61 +495,322 @@ function handlePointerUp(event) {
     return;
   }
 
+  document.querySelectorAll(".cell.hint").forEach(cell => {
+    cell.classList.remove("hint");
+  });
+
   foundWords.add(placement.word);
 
   placement.cells.forEach(key => {
     const cell = cellElement(key);
 
-    if (cell) {
-      cell.classList.add("found");
-    }
+    if (cell) cell.classList.add("found");
   });
 
   const listItem = $(
     `#words [data-word="${placement.word}"]`
   );
 
-  if (listItem) {
-    listItem.classList.add("completed");
-  }
+  if (listItem) listItem.classList.add("completed");
 
   resetSelection();
   updateProgress();
 
   if (foundWords.size === puzzle.placements.length) {
-    clearInterval(timerInterval);
-    setStatus(
-  `Great job! You found every word! Your time: ${$("#timer").textContent}`,
-  "success complete"
-);
+    finishPuzzle();
   } else {
     setStatus(`Yes! You found ${placement.word}.`, "success");
   }
 }
 
+function finishPuzzle() {
+  gameFinished = true;
+  stopTimer();
+
+  if (gameMode === "timed") {
+    setStatus(
+      `Amazing! You found every word in ${formatTime(elapsedSeconds)}!`,
+      "success complete"
+    );
+
+    showScoreEntry();
+  } else {
+    setStatus(
+      "Great job! You found every word!",
+      "success complete"
+    );
+  }
+}
+
 function showAnswers() {
+  if (!puzzle || gameFinished) return;
+
   for (const placement of puzzle.placements) {
     foundWords.add(placement.word);
+
     placement.cells.forEach(key => {
       const cell = cellElement(key);
       if (cell) cell.classList.add("found");
     });
+
     const listItem = $(`#words [data-word="${placement.word}"]`);
     if (listItem) listItem.classList.add("completed");
   }
 
+  gameFinished = true;
   resetSelection();
   updateProgress();
-  clearInterval(timerInterval);
+  stopTimer();
+
+  document.querySelectorAll(".cell.hint").forEach(cell => {
+    cell.classList.remove("hint");
+  });
+
   setStatus(
-  `Answers revealed! Time played: ${$("#timer").textContent}. Start a new puzzle to play again.`,
-  "success"
-);
+    "Answers revealed! This puzzle will not count toward the leaderboard.",
+    "success"
+  );
 }
 
+function giveHint() {
+  if (!puzzle || gameFinished) return;
+
+  const nextPlacement = puzzle.placements.find(
+    placement => !foundWords.has(placement.word)
+  );
+
+  if (!nextPlacement) {
+    setStatus("You've already found every word!", "success");
+    return;
+  }
+
+  document.querySelectorAll(".cell.hint").forEach(cell => {
+    cell.classList.remove("hint");
+  });
+
+  const firstCell = cellElement(nextPlacement.cells[0]);
+
+  if (firstCell) {
+    firstCell.classList.add("hint");
+    setStatus(
+      "Hint: Look for a word starting at the highlighted letter!",
+      "success"
+    );
+  }
+}
+
+/* --------------------------------
+   LEADERBOARD FUNCTIONS
+-------------------------------- */
+
+function getLeaderboardData() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem(LEADERBOARD_KEY) || "{}"
+    );
+
+    // Convert an older version that stored all scores in one array.
+    if (Array.isArray(saved)) {
+      const converted = {};
+
+      saved.forEach(score => {
+        const size = String(Number(score.size));
+
+        if (!Number.isInteger(Number(size)) || Number(size) < 6) {
+          return;
+        }
+
+        if (!converted[size]) {
+          converted[size] = [];
+        }
+
+        converted[size].push(score);
+      });
+
+      Object.keys(converted).forEach(size => {
+        converted[size] = converted[size]
+          .sort((a, b) => a.seconds - b.seconds)
+          .slice(0, 10);
+      });
+
+      localStorage.setItem(
+        LEADERBOARD_KEY,
+        JSON.stringify(converted)
+      );
+
+      return converted;
+    }
+
+    return saved && typeof saved === "object" ? saved : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function getScoresForSize(size) {
+  const data = getLeaderboardData();
+  const scores = data[String(size)];
+
+  if (!Array.isArray(scores)) return [];
+
+  return scores
+    .filter(score =>
+      typeof score.name === "string" &&
+      Number.isFinite(score.seconds) &&
+      score.seconds >= 0
+    )
+    .sort((a, b) => a.seconds - b.seconds)
+    .slice(0, 10);
+}
+
+function saveLeaderboard(size, score) {
+  try {
+    const data = getLeaderboardData();
+    const key = String(size);
+
+    if (!Array.isArray(data[key])) {
+      data[key] = [];
+    }
+
+    data[key].push(score);
+
+    data[key].sort((a, b) => a.seconds - b.seconds);
+
+    // Keep only the 10 fastest times for this board size.
+    data[key] = data[key].slice(0, 10);
+
+    localStorage.setItem(
+      LEADERBOARD_KEY,
+      JSON.stringify(data)
+    );
+
+    return true;
+  } catch (error) {
+    setStatus(
+      "Your score could not be saved. Browser storage may be unavailable.",
+      "error"
+    );
+
+    return false;
+  }
+}
+
+function populateLeaderboardSizes() {
+  const select = $("#leaderboard-size");
+  const currentValue = select.value;
+
+  select.innerHTML = "";
+
+  // Custom puzzles can be any size from 6 through 30.
+  for (let size = 6; size <= 30; size++) {
+    const option = document.createElement("option");
+
+    option.value = String(size);
+    option.textContent = `${size} × ${size}`;
+
+    select.appendChild(option);
+  }
+
+  select.value = currentValue || "10";
+}
+
+function renderLeaderboard() {
+  const list = $("#leaderboard-list");
+  const size = Number($("#leaderboard-size").value);
+  const scores = getScoresForSize(size);
+
+  list.innerHTML = "";
+
+  if (scores.length === 0) {
+    const empty = document.createElement("li");
+
+    empty.className = "empty-leaderboard";
+    empty.textContent =
+      `No scores yet for the ${size} × ${size} board. Be the first!`;
+
+    list.appendChild(empty);
+    return;
+  }
+
+  scores.forEach((score, index) => {
+    const item = document.createElement("li");
+
+    const details = document.createElement("span");
+
+    details.textContent = `${score.name} — ${score.wordCount} words`;
+
+    const time = document.createElement("span");
+
+    time.className = "score-time";
+    time.textContent = formatTime(score.seconds);
+
+    item.append(details, time);
+    list.appendChild(item);
+  });
+}
+
+function showScoreEntry() {
+  $("#score-entry").classList.remove("hidden");
+
+  $("#score-message").textContent =
+    `Your ${puzzle.size} × ${puzzle.size} completion time was ${formatTime(elapsedSeconds)}. Enter your name to save your score!`;
+
+  $("#player-name").value = "";
+
+  $("#player-name").focus();
+}
+
+function savePlayerScore(event) {
+  event.preventDefault();
+
+  if (!puzzle || gameMode !== "timed" || !gameFinished) {
+    return;
+  }
+
+  const name = $("#player-name").value.trim();
+
+  if (!name) {
+    $("#player-name").focus();
+    return;
+  }
+
+  const score = {
+    name: name.slice(0, 20),
+    seconds: elapsedSeconds,
+    size: puzzle.size,
+    wordCount: puzzle.words.length,
+    date: new Date().toISOString()
+  };
+
+  if (saveLeaderboard(puzzle.size, score)) {
+    $("#score-entry").classList.add("hidden");
+
+    // Show the leaderboard for the board just completed.
+    $("#leaderboard-size").value = String(puzzle.size);
+
+    renderLeaderboard();
+
+    setStatus(
+      `Your ${puzzle.size} × ${puzzle.size} score has been saved!`,
+      "success complete"
+    );
+
+    $("#leaderboard").scrollIntoView({
+      behavior: "smooth",
+      block: "nearest"
+    });
+  }
+}
+
+/* --------------------------------
+   GAME SETUP
+-------------------------------- */
+
 function startGame() {
-  const mode = $('input[name="word-mode"]:checked').value;
-  const customMode = mode === "custom";
+  const wordMode = $('input[name="word-mode"]:checked').value;
+  const customMode = wordMode === "custom";
+
+  gameMode = $('input[name="game-mode"]:checked').value;
 
   let words;
   const requestedSize = Number($("#grid-size").value);
@@ -581,10 +838,18 @@ function startGame() {
   $("#setup-message").textContent = "";
 
   try {
-    puzzle = buildPuzzle(words, requestedSize, customMode);
-    startTimer();
+    const newPuzzle = buildPuzzle(words, requestedSize, customMode);
+
+    stopTimer();
+
+    puzzle = newPuzzle;
     foundWords = new Set();
+    gameFinished = false;
+
+    $("#score-entry").classList.add("hidden");
+
     renderPuzzle();
+    startTimer();
   } catch (error) {
     $("#setup-message").textContent = error.message;
   }
@@ -607,6 +872,10 @@ function showCorrectOptions() {
   $("#setup-message").textContent = "";
 }
 
+/* --------------------------------
+   EVENT LISTENERS
+-------------------------------- */
+
 document.addEventListener("DOMContentLoaded", () => {
   document
     .querySelectorAll('input[name="word-mode"]')
@@ -617,10 +886,20 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#start-game").addEventListener("click", startGame);
   $("#new-puzzle").addEventListener("click", startGame);
   $("#show-answers").addEventListener("click", showAnswers);
+  $("#hint-button").addEventListener("click", giveHint);
+  $("#score-form").addEventListener("submit", savePlayerScore);
+
+  $("#leaderboard-size").addEventListener(
+    "change",
+    renderLeaderboard
+  );
 
   $("#back-to-setup").addEventListener("click", () => {
+    stopTimer();
     resetSelection();
+
     $("#game").style.display = "none";
+    $("#score-entry").classList.add("hidden");
     $("#setup").classList.remove("hidden");
   });
 
@@ -635,5 +914,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setStatus("Selection cancelled. Try again.");
   });
 
+  populateLeaderboardSizes();
   showCorrectOptions();
+  renderLeaderboard();
 });
