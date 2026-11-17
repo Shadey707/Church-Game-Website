@@ -194,6 +194,31 @@
       flex-wrap: wrap;
     }
 
+    #timer {
+      background: #FEAD21;
+      color: #0B2D57;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      border: 2px solid #0B2D57;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    
+    #timer:hover {
+      transform: translateY(-2px);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #timer {
+        transition: none;
+      }
+
+      #timer:hover {
+        transform: none;
+      }
+    }
+
     #progress {
       font-weight: 800;
     }
