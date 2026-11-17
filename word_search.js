@@ -522,7 +522,10 @@ function handlePointerUp(event) {
 
   if (foundWords.size === puzzle.placements.length) {
     clearInterval(timerInterval);
-    setStatus("Great job! You found every word!", "success complete");
+    setStatus(
+  `Great job! You found every word! Your time: ${$("#timer").textContent}`,
+  "success complete"
+);
   } else {
     setStatus(`Yes! You found ${placement.word}.`, "success");
   }
@@ -541,7 +544,11 @@ function showAnswers() {
 
   resetSelection();
   updateProgress();
-  setStatus("Answers revealed! Start a new puzzle to play again.", "success");
+  clearInterval(timerInterval);
+  setStatus(
+  `Answers revealed! Time played: ${$("#timer").textContent}. Start a new puzzle to play again.`,
+  "success"
+);
 }
 
 function startGame() {
