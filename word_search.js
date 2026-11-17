@@ -15,6 +15,8 @@ let isDragging = false;
 let currentPath = [];
 let foundWords = new Set();
 let pointerId = null;
+let timerInterval = null;
+let elapsedSeconds = 0;
 
 const $ = selector => document.querySelector(selector);
 
@@ -282,6 +284,25 @@ function setStatus(message, type = "") {
   status.className = type;
 }
 
+function updateTimerDisplay() {
+  const minutes = Math.floor(elapsedSeconds / 60);
+  const seconds = elapsedSeconds % 60;
+
+  $("#timer").textContent =
+    `Time: ${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  elapsedSeconds = 0;
+  updateTimerDisplay();
+
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    updateTimerDisplay();
+  }, 1000);
+}
+
 function updateProgress() {
   $("#progress").textContent =
     `${foundWords.size} of ${puzzle.placements.length} words found`;
@@ -500,7 +521,8 @@ function handlePointerUp(event) {
   updateProgress();
 
   if (foundWords.size === puzzle.placements.length) {
-    setStatus("Great job! You found every word!", "success");
+    clearInterval(timerInterval);
+    setStatus("Great job! You found every word!", "success complete");
   } else {
     setStatus(`Yes! You found ${placement.word}.`, "success");
   }
@@ -509,27 +531,17 @@ function handlePointerUp(event) {
 function showAnswers() {
   for (const placement of puzzle.placements) {
     foundWords.add(placement.word);
-
     placement.cells.forEach(key => {
       const cell = cellElement(key);
-
-      if (cell) {
-        cell.classList.add("found");
-      }
+      if (cell) cell.classList.add("found");
     });
-
-    const listItem = $(
-      `#words [data-word="${placement.word}"]`
-    );
-
-    if (listItem) {
-      listItem.classList.add("completed");
-    }
+    const listItem = $(`#words [data-word="${placement.word}"]`);
+    if (listItem) listItem.classList.add("completed");
   }
 
   resetSelection();
   updateProgress();
-  setStatus("All answers are shown.", "success");
+  setStatus("Answers revealed! Start a new puzzle to play again.", "success");
 }
 
 function startGame() {
@@ -563,6 +575,7 @@ function startGame() {
 
   try {
     puzzle = buildPuzzle(words, requestedSize, customMode);
+    startTimer();
     foundWords = new Set();
     renderPuzzle();
   } catch (error) {
