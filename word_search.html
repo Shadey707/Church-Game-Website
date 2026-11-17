@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#f7f4fb">
+  <meta name="theme-color" content="#D8E7F7">
   <title>LDS Church Word Search</title>
 
   <style>
@@ -19,9 +20,7 @@
       --border: #D8E7F7;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -52,10 +51,7 @@
       margin: 0 0 12px;
     }
 
-    .subtitle,
-    .help {
-      color: var(--muted);
-    }
+    .subtitle, .help { color: var(--muted); }
 
     .panel {
       background: var(--surface);
@@ -63,7 +59,7 @@
       border-radius: 16px;
       padding: 16px;
       margin: 14px 0;
-      box-shadow: 0 8px 24px rgba(11, 45, 87, 0.08); 
+      box-shadow: 0 8px 24px rgba(11, 45, 87, 0.08);
     }
 
     fieldset {
@@ -114,8 +110,7 @@
       margin: 14px 0 6px;
     }
 
-    select,
-    textarea {
+    select, textarea, input[type="text"] {
       width: 100%;
       padding: 12px;
       border: 1px solid var(--border);
@@ -162,14 +157,13 @@
 
     button:focus-visible,
     select:focus-visible,
-    textarea:focus-visible {
+    textarea:focus-visible,
+    input:focus-visible {
       outline: 3px solid #FEAD21;
       outline-offset: 2px;
     }
 
-    button.secondary:hover {
-      background: #D8E7F7;
-    }
+    button.secondary:hover { background: #D8E7F7; }
 
     .button-row {
       display: flex;
@@ -178,13 +172,9 @@
       margin-top: 14px;
     }
 
-    .button-row button {
-      flex: 1 1 130px;
-    }
+    .button-row button { flex: 1 1 130px; }
 
-    #game {
-      display: none;
-    }
+    #game { display: none; }
 
     .game-top {
       display: flex;
@@ -204,24 +194,10 @@
       border: 2px solid #0B2D57;
       transition: background 0.2s ease, transform 0.2s ease;
     }
-    
-    #timer:hover {
-      transform: translateY(-2px);
-    }
 
-    @media (prefers-reduced-motion: reduce) {
-      #timer {
-        transition: none;
-      }
+    #timer:hover { transform: translateY(-2px); }
 
-      #timer:hover {
-        transform: none;
-      }
-    }
-
-    #progress {
-      font-weight: 800;
-    }
+    #progress { font-weight: 800; }
 
     #status {
       min-height: 1.5em;
@@ -230,13 +206,8 @@
       color: var(--muted);
     }
 
-    #status.success {
-      color: var(--success-ink);
-    }
-
-    #status.error {
-      color: #9b2c40;
-    }
+    #status.success { color: var(--success-ink); }
+    #status.error { color: #9b2c40; }
 
     #status.complete {
       background: #FEAD21;
@@ -280,6 +251,14 @@
     #grid[data-size="6"] .cell,
     #grid[data-size="8"] .cell {
       font-size: clamp(0.8rem, 4.5vw, 1.25rem);
+    }
+
+    .cell.hint {
+      background: #FEAD21;
+      color: #0B2D57;
+      border: 3px solid #0B2D57;
+      box-shadow: 0 0 10px rgba(254, 173, 33, 0.7);
+      animation: foundPulse 0.5s ease infinite;
     }
 
     .cell.selected {
@@ -327,9 +306,44 @@
       border-color: #386DA8;
     }
 
-    .hidden {
-      display: none !important;
+    #score-entry {
+      border: 2px solid #FEAD21;
     }
+
+    #score-entry p { line-height: 1.5; }
+
+    #leaderboard-list {
+      padding-left: 28px;
+      margin: 0;
+    }
+
+    #leaderboard-list li {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    #leaderboard-list li:first-child {
+      background: #FFF4D9;
+      border-radius: 8px;
+      font-weight: 800;
+    }
+
+    .score-time {
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .empty-leaderboard {
+      color: var(--muted);
+      padding: 10px 0;
+    }
+
+    .hidden { display: none !important; }
 
     footer {
       margin-top: 20px;
@@ -338,18 +352,25 @@
       font-size: 0.85rem;
     }
 
+    @keyframes foundPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #timer, .cell.found, .cell.hint, #status.complete {
+        animation: none;
+        transition: none;
+      }
+
+      #timer:hover { transform: none; }
+    }
+
     @media (min-width: 560px) {
-      body {
-        padding: 28px 20px 40px;
-      }
-
-      .panel {
-        padding: 20px;
-      }
-
-      #words {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
+      body { padding: 28px 20px 40px; }
+      .panel { padding: 20px; }
+      #words { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     }
 
     @media (max-width: 360px) {
@@ -358,39 +379,11 @@
         padding-right: 7px;
       }
 
-      .panel {
-        padding: 12px;
-      }
-
-      .mode-options {
-        grid-template-columns: 1fr;
-      }
-
-      #grid {
-        gap: 1px;
-      }
-
-      .cell {
-        border-radius: 2px;
-          }
-        }
-        @keyframes foundPulse {
-      0% {
-        transform: scale(1);
-      }
-      50% {
-        transform: scale(1.12);
-      }
-      100% {
-        transform: scale(1);
-      }
+      .panel { padding: 12px; }
+      .mode-options { grid-template-columns: 1fr; }
+      #grid { gap: 1px; }
+      .cell { border-radius: 2px; }
     }
-
-    @media (prefers-reduced-motion: reduce) {
-      .cell.found {
-        animation: none;
-      }
-}
   </style>
 </head>
 
@@ -398,9 +391,7 @@
   <main>
     <header>
       <h1>LDS Church Word Search</h1>
-      <p class="subtitle">
-        Find the hidden words one letter at a time.
-      </p>
+      <p class="subtitle">Find the hidden words one letter at a time.</p>
     </header>
 
     <section id="setup" class="panel">
@@ -411,41 +402,47 @@
 
         <div class="mode-options">
           <label class="mode-option">
-            <input
-              type="radio"
-              name="word-mode"
-              value="default"
-              checked
-            >
+            <input type="radio" name="word-mode" value="default" checked>
             <span>
               <strong>Default words</strong>
-              <small>
-                Choose a grid size; the game picks the words.
-              </small>
+              <small>Choose a grid size; the game picks the words.</small>
             </span>
           </label>
 
           <label class="mode-option">
-            <input
-              type="radio"
-              name="word-mode"
-              value="custom"
-            >
+            <input type="radio" name="word-mode" value="custom">
             <span>
               <strong>My own words</strong>
-              <small>
-                Enter words; the game chooses the grid size.
-              </small>
+              <small>Enter words; the game chooses the grid size.</small>
+            </span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset style="margin-top: 20px;">
+        <legend>Choose your game mode</legend>
+
+        <div class="mode-options">
+          <label class="mode-option">
+            <input type="radio" name="game-mode" value="normal" checked>
+            <span>
+              <strong>Normal Mode</strong>
+              <small>Play at your own pace without a leaderboard score.</small>
+            </span>
+          </label>
+
+          <label class="mode-option">
+            <input type="radio" name="game-mode" value="timed">
+            <span>
+              <strong>Timed Challenge</strong>
+              <small>Race against the clock and save your best times!</small>
             </span>
           </label>
         </div>
       </fieldset>
 
       <div id="default-options">
-        <label class="field-label" for="grid-size">
-          Grid size
-        </label>
-
+        <label class="field-label" for="grid-size">Grid size</label>
         <select id="grid-size">
           <option value="6">6 × 6 — Quick</option>
           <option value="8">8 × 8 — Easy</option>
@@ -454,21 +451,13 @@
           <option value="15">15 × 15 — Hard</option>
         </select>
 
-        <p class="help">
-          The game chooses a suitable number of words for the grid.
-        </p>
+        <p class="help">The game chooses a suitable number of words for the grid.</p>
       </div>
 
       <div id="custom-options" class="hidden">
-        <label class="field-label" for="custom-words">
-          Your words
-        </label>
-
-        <textarea
-          id="custom-words"
-          placeholder="Enter one word per line&#10;FAITH&#10;JESUS&#10;PRAYER"
-        ></textarea>
-
+        <label class="field-label" for="custom-words">Your words</label>
+        <textarea id="custom-words"
+          placeholder="Enter one word per line&#10;FAITH&#10;JESUS&#10;PRAYER"></textarea>
         <p class="help">
           Use letters A–Z. Spaces and punctuation are removed.
           The grid will be sized automatically.
@@ -478,22 +467,14 @@
       <p id="setup-message" class="help" role="status"></p>
 
       <div class="button-row">
-        <button id="start-game" type="button">
-          Create Puzzle
-        </button>
+        <button id="start-game" type="button">Create Puzzle</button>
       </div>
     </section>
 
     <section id="game" class="panel" aria-label="Word search game">
       <div class="game-top">
-        <div id="progress" aria-live="polite">
-          0 of 0 words found
-        </div>
-
-        <div id="timer" aria-live="off">
-          Time: 00:00
-        </div>
-
+        <div id="progress" aria-live="polite">0 of 0 words found</div>
+        <div id="timer" aria-live="off">Time: —</div>
         <div id="game-size-label" class="help"></div>
       </div>
 
@@ -507,23 +488,47 @@
       <ul id="words"></ul>
 
       <div class="button-row">
-        <button id="new-puzzle" class="secondary" type="button">
-          New Puzzle
-        </button>
-
-        <button id="show-answers" class="secondary" type="button">
-          Show Answers
-        </button>
-
-        <button id="back-to-setup" class="secondary" type="button">
-          Puzzle Settings
-        </button>
+        <button id="new-puzzle" class="secondary" type="button">New Puzzle</button>
+        <button id="show-answers" class="secondary" type="button">Show Answers</button>
+        <button id="hint-button" class="secondary" type="button">Hint</button>
+        <button id="back-to-setup" class="secondary" type="button">Puzzle Settings</button>
       </div>
     </section>
 
-    <footer>
-      Take your time and enjoy the puzzle.
-    </footer>
+    <section id="score-entry" class="panel hidden">
+      <h2>🏆 You made it!</h2>
+      <p id="score-message"></p>
+
+      <form id="score-form">
+        <label class="field-label" for="player-name">Enter your name for the leaderboard</label>
+        <input id="player-name" type="text" maxlength="20"
+          placeholder="Your name" required>
+        <div class="button-row">
+          <button type="submit">Save My Score</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="leaderboard" class="panel">
+      <h2>🏆 Timed Challenge Leaderboard</h2>
+      <p class="help">The 10 fastest completed challenges for each grid size, saved on this device.</p>
+
+      <label class="field-label" for="leaderboard-size">
+        Choose a leaderboard
+      </label>
+
+      <select id="leaderboard-size">
+        <option value="6">6 × 6</option>
+        <option value="8">8 × 8</option>
+        <option value="10" selected>10 × 10</option>
+        <option value="12">12 × 12</option>
+        <option value="15">15 × 15</option>
+      </select>
+
+      <ol id="leaderboard-list"></ol>
+    </section>
+
+    <footer>Take your time and enjoy the puzzle.</footer>
   </main>
 
   <script src="word_search.js"></script>
