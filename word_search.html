@@ -8,15 +8,15 @@
 
   <style>
     :root {
-      --page: #f7f4fb;
-      --surface: #ffffff;
-      --ink: #33264a;
-      --muted: #6f647d;
-      --accent: #6e55a1;
-      --accent-dark: #4d3978;
-      --success: #d9f2df;
-      --success-ink: #205c32;
-      --border: #ded6e9;
+      --page: #D8E7F7;
+      --surface: #FFFFFF;
+      --ink: #0B2D57;
+      --muted: #386DA8;
+      --accent: #386DA8;
+      --accent-dark: #0B2D57;
+      --success: #FEAD21;
+      --success-ink: #0B2D57;
+      --border: #D8E7F7;
     }
 
     * {
@@ -63,7 +63,7 @@
       border-radius: 16px;
       padding: 16px;
       margin: 14px 0;
-      box-shadow: 0 8px 24px rgba(51, 38, 74, 0.08);
+      box-shadow: 0 8px 24px rgba(11, 45, 87, 0.08); 
     }
 
     fieldset {
@@ -94,7 +94,7 @@
 
     .mode-option:has(input:checked) {
       border-color: var(--accent);
-      background: #f5f0fc;
+      background: #D8E7F7;
     }
 
     input[type="radio"] {
@@ -136,37 +136,39 @@
     }
 
     button {
-      min-height: 44px;
-      padding: 10px 15px;
-      border: 0;
-      border-radius: 10px;
+      min-height: 46px;
+      padding: 11px 18px;
+      border: 2px solid transparent;
+      border-radius: 12px;
       background: var(--accent);
       color: white;
       font: inherit;
       font-weight: 750;
       cursor: pointer;
       touch-action: manipulation;
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     button:hover {
       background: var(--accent-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(11, 45, 87, 0.18);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: none;
     }
 
     button:focus-visible,
     select:focus-visible,
     textarea:focus-visible {
-      outline: 3px solid #b7a2e0;
+      outline: 3px solid #FEAD21;
       outline-offset: 2px;
     }
 
-    button.secondary {
-      background: white;
-      color: var(--accent-dark);
-      border: 1px solid var(--border);
-    }
-
     button.secondary:hover {
-      background: #f5f0fc;
+      background: #D8E7F7;
     }
 
     .button-row {
@@ -211,6 +213,16 @@
       color: #9b2c40;
     }
 
+    #status.complete {
+      background: #FEAD21;
+      color: #0B2D57;
+      border: 2px solid #0B2D57;
+      border-radius: 12px;
+      padding: 14px;
+      font-weight: 800;
+      animation: foundPulse 0.4s ease;
+    }
+
     #grid {
       display: grid;
       width: min(100%, 600px);
@@ -246,14 +258,17 @@
     }
 
     .cell.selected {
-      background: #d9ccf2;
-      border-color: var(--accent);
+      background: #FEAD21;
+      border-color: #0B2D57;
+      color: #0B2D57;
     }
 
     .cell.found {
-      background: var(--success);
-      color: var(--success-ink);
-      border-color: #8bc69a;
+      background: #FEAD21;
+      color: #0B2D57;
+      border: 2px solid #0B2D57;
+      box-shadow: 0 0 6px rgba(254, 173, 33, 0.55);
+      animation: foundPulse 0.3s ease;
     }
 
     .cell.preview-invalid {
@@ -281,10 +296,10 @@
     }
 
     #words li.completed {
-      color: var(--success-ink);
-      background: var(--success);
+      color: #0B2D57;
+      background: #D8E7F7;
       text-decoration: line-through;
-      border-color: #8bc69a;
+      border-color: #386DA8;
     }
 
     .hidden {
@@ -332,8 +347,25 @@
 
       .cell {
         border-radius: 2px;
+          }
+        }
+        @keyframes foundPulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.12);
+      }
+      100% {
+        transform: scale(1);
       }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cell.found {
+        animation: none;
+      }
+}
   </style>
 </head>
 
@@ -432,6 +464,11 @@
         <div id="progress" aria-live="polite">
           0 of 0 words found
         </div>
+
+        <div id="timer" aria-live="off">
+          Time: 00:00
+        </div>
+
         <div id="game-size-label" class="help"></div>
       </div>
 
@@ -467,4 +504,3 @@
   <script src="word_search.js"></script>
 </body>
 </html>
-```
