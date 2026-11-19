@@ -254,30 +254,25 @@
     }
 
     .cell.hint {
-      background: #FEAD21;
-      color: #0B2D57;
-      border: 3px solid #0B2D57;
-      box-shadow: 0 0 10px rgba(254, 173, 33, 0.7);
+      background: #FDE68A;
+      color: #172554;
+      border: 3px solid #92400E;
+      box-shadow: 0 0 0 2px rgba(146, 64, 14, 0.16);
       animation: foundPulse 0.5s ease infinite;
     }
 
     .cell.selected {
-      background: #FEAD21;
-      border-color: #0B2D57;
-      color: #0B2D57;
+      background: #BFDBFE;
+      border: 2px solid #1D4ED8;
+      color: #172554;
     }
 
     .cell.found {
-      background: #FEAD21;
-      color: #0B2D57;
-      border: 2px solid #0B2D57;
-      box-shadow: 0 0 6px rgba(254, 173, 33, 0.55);
+      background: var(--word-color, #A5B4FC);
+      color: #172033;
+      border: 2px solid #334155;
+      box-shadow: none;
       animation: foundPulse 0.3s ease;
-    }
-
-    .cell.preview-invalid {
-      background: #f8dfe3;
-      border-color: #cf8490;
     }
 
     #words {
@@ -300,10 +295,10 @@
     }
 
     #words li.completed {
-      color: #0B2D57;
-      background: #D8E7F7;
+      color: #172033;
+      background: var(--word-color, #E0E7FF);
       text-decoration: line-through;
-      border-color: #386DA8;
+      border: 2px solid #334155;
     }
 
     #score-entry {
