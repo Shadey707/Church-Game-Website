@@ -10,14 +10,22 @@ body {
 header,
 main,
 footer {
-    margin: 3%;
+    margin: 2%;
     padding: 8px;
     background-color: #D8E7F7;
 }
 
 /* Header */
 header {
-    margin-bottom: 10%;
+    margin-bottom: 4%;
+}
+
+header img {
+    mask-image:
+        linear-gradient(to right, transparent, black 05%, black 95%, transparent),
+        linear-gradient(to bottom, transparent, black 05%, black 95%, transparent);
+
+    mask-composite: intersect;
 }
 
 header section {
