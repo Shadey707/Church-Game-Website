@@ -10,6 +10,21 @@ const DIRECTIONS = [
   [1, 1], [1, -1], [-1, 1], [-1, -1]
 ];
 
+const FOUND_COLORS = [
+  "#93C5FD", // Blue
+  "#C4B5FD", // Purple
+  "#86EFAC", // Green
+  "#F9A8D4", // Pink
+  "#67E8F9", // Cyan
+  "#FDE68A", // Yellow
+  "#FDBA74", // Peach
+  "#A5B4FC", // Indigo
+  "#f4f8a1", // Muted-Yellow
+  "#F0ABFC", // Fuchsia
+  "#6EE7B7", // Mint
+  "#FCA5A5"  // Coral
+];
+
 const LEADERBOARD_KEY = "churchWordSearchLeaderboard";
 
 let puzzle = null;
@@ -108,7 +123,8 @@ function placeWord(grid, word) {
 
   if (options.length === 0) return null;
 
-  options.sort((a, b) => b.overlaps - a.overlaps);
+options.sort((a, b) => a.overlaps - b.overlaps);
+
 
   const pool = options.slice(0, Math.min(30, options.length));
   const chosen = pool[Math.floor(Math.random() * pool.length)];
@@ -140,7 +156,7 @@ function attemptPuzzle(words, size) {
     const placement = placeWord(grid, word);
 
     if (!placement) return null;
-
+    placement.color = FOUND_COLORS[placements.length % FOUND_COLORS.length];
     placements.push(placement);
   }
 
@@ -216,6 +232,24 @@ function cellKey(row, col) {
 
 function cellElement(key) {
   return $(`#grid [data-position="${key}"]`);
+}
+
+function markPlacementFound(placement) {
+  placement.cells.forEach(key => {
+    const cell = cellElement(key);
+
+    if (cell) {
+      cell.style.setProperty("--word-color", placement.color);
+      cell.classList.add("found");
+    }
+  });
+
+  const listItem = $(`#words [data-word="${placement.word}"]`);
+
+  if (listItem) {
+    listItem.style.setProperty("--word-color", placement.color);
+    listItem.classList.add("completed");
+  }
 }
 
 function renderPuzzle() {
@@ -501,17 +535,7 @@ function handlePointerUp(event) {
 
   foundWords.add(placement.word);
 
-  placement.cells.forEach(key => {
-    const cell = cellElement(key);
-
-    if (cell) cell.classList.add("found");
-  });
-
-  const listItem = $(
-    `#words [data-word="${placement.word}"]`
-  );
-
-  if (listItem) listItem.classList.add("completed");
+  markPlacementFound(placement);
 
   resetSelection();
   updateProgress();
@@ -548,16 +572,10 @@ function showAnswers() {
   for (const placement of puzzle.placements) {
     foundWords.add(placement.word);
 
-    placement.cells.forEach(key => {
-      const cell = cellElement(key);
-      if (cell) cell.classList.add("found");
-    });
-
-    const listItem = $(`#words [data-word="${placement.word}"]`);
-    if (listItem) listItem.classList.add("completed");
-  }
+    markPlacementFound(placement);
 
   gameFinished = true;
+  }
   resetSelection();
   updateProgress();
   stopTimer();
