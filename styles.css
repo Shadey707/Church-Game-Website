@@ -51,11 +51,20 @@ header section .menu-btn {
     width: 32px;
     height: 32px;
     padding: 0;
+    background-color: #386DA8;   
+    color: white;                
+    border: none;                
+    cursor: pointer;             
 }
 
 /* Navigation */
 nav {
+    display: none;               
     margin-top: 8px;
+}
+
+nav.open {                       
+    display: block;
 }
 
 nav ul {
@@ -82,6 +91,14 @@ nav a {
     color: white;
     text-decoration: none;
     text-align: center;
+}
+
+nav li:hover {                   
+    background-color: #FEAD21;
+}
+
+nav li:hover a {                 
+    color: #0B2D57;
 }
 
 /* Footer */
