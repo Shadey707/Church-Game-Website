@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let board = Array(9).fill("");
     let gameOver = false;
     let currentPlayer = "X";
+    let computerThinking = false;
+    let difficulty = "easy";
+    let computerTimer = null;
 
     const winningCombinations = [
         [0, 1, 2],
@@ -592,6 +595,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         restartGame();
     });
+
+    // Set up the initial game mode display
+    difficultySelect.style.display = "inline-block";
+    difficultyLabel.style.display = "inline-block";
 
     // Display the empty board
     renderBoard();
