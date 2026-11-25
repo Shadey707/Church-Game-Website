@@ -8,9 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Game state
     let board = Array(9).fill("");
     let gameOver = false;
-    let computerThinking = false;
-    let difficulty = "easy";
-    let computerTimer = null;
+    let currentPlayer = "X";
 
     const winningCombinations = [
         [0, 1, 2],
@@ -270,7 +268,13 @@ document.addEventListener("DOMContentLoaded", () => {
         </header>
 
         <div class="controls">
-            <label for="difficulty">Difficulty:</label>
+            <label for="gameMode">Game Mode:</label>
+            <select class="difficulty-select" id="gameMode">
+                <option value="computer">1 Player (vs Computer)</option>
+                <option value="twoPlayer">2 Players</option>
+            </select>
+
+            <label for="difficulty" id="difficultyLabel">Difficulty:</label>
             <select class="difficulty-select" id="difficulty">
                 <option value="easy">Easy</option>
                 <option value="medium">Medium</option>
@@ -294,6 +298,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const boardElement = document.getElementById("board");
     const statusElement = document.getElementById("status");
     const difficultySelect = document.getElementById("difficulty");
+    const gameModeSelect = document.getElementById("gameMode");
+    const difficultyLabel = document.getElementById("difficultyLabel");
     const restartButton = document.getElementById("restart");
 
     const cells = [];
@@ -361,18 +367,22 @@ document.addEventListener("DOMContentLoaded", () => {
         statusElement.className = "status";
 
         if (winner === "X") {
-            statusElement.textContent = "You win! Great job!";
+            statusElement.textContent = gameModeSelect.value === "twoPlayer"
+                ? "Player 1 (X) wins! Great job!"
+                : "You win! Great job!";
             statusElement.classList.add("victory");
             gameOver = true;
         } else if (winner === "O") {
-            statusElement.textContent = "The computer wins! Try again!";
+            statusElement.textContent = gameModeSelect.value === "twoPlayer"
+                ? "Player 2 (O) wins! Great job!"
+                : "The computer wins! Try again!";
             statusElement.classList.add("defeat");
             gameOver = true;
         } else if (board.every(square => square !== "")) {
-            statusElement.textContent = "It's a tie!";
-            statusElement.classList.add("draw");
-            gameOver = true;
-        }
+                    statusElement.textContent = "It's a tie!";
+                    statusElement.classList.add("draw");
+                    gameOver = true;
+                }
 
         if (winningSquares) {
             winningSquares.forEach(index => {
@@ -386,41 +396,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle the player's turn
     function playerMove(index) {
-        if (gameOver || computerThinking || board[index] !== "") {
-            return;
-        }
-
-        board[index] = "X";
-        renderBoard();
-
-        if (checkGameOver()) {
-            return;
-        }
-
-        computerThinking = true;
-        statusElement.className = "status";
-        statusElement.textContent = "Computer is thinking...";
-        renderBoard();
-
-        // Brief pause before the computer moves
-        computerTimer = window.setTimeout(() => {
-            computerTimer = null;
-
-            if (gameOver) {
-                computerThinking = false;
-                renderBoard();
-                return;
-            }
-
-            computerMove();
-            computerThinking = false;
-
-            if (!checkGameOver()) {
-                statusElement.textContent = "Your turn! Choose a square.";
-                renderBoard();
-            }
-        }, 350);
+    if (gameOver || computerThinking || board[index] !== "") {
+        return;
     }
+
+    board[index] = currentPlayer;
+    renderBoard();
+
+    if (checkGameOver()) {
+        return;
+    }
+
+    // Switch players in two-player mode
+    if (gameModeSelect.value === "twoPlayer") {
+        currentPlayer = currentPlayer === "X" ? "O" : "X";
+        statusElement.textContent = `Player ${currentPlayer === "X" ? "1" : "2"}'s turn!`;
+        renderBoard();
+        return;
+    }
+
+    // Let the computer respond in one-player mode
+    computerThinking = true;
+    statusElement.className = "status";
+    statusElement.textContent = "Computer is thinking...";
+    renderBoard();
+
+    computerTimer = window.setTimeout(() => {
+        computerTimer = null;
+
+        if (gameOver) {
+            computerThinking = false;
+            renderBoard();
+            return;
+        }
+
+        computerMove();
+        computerThinking = false;
+
+        if (!checkGameOver()) {
+            statusElement.textContent = "Your turn! Choose a square.";
+            renderBoard();
+        }
+    }, 350);
+}
 
     // Find a winning move or a move that blocks the player
     function findTacticalMove(player) {
@@ -542,6 +560,7 @@ document.addEventListener("DOMContentLoaded", () => {
         board = Array(9).fill("");
         gameOver = false;
         computerThinking = false;
+        currentPlayer = "X";
 
         
 
@@ -551,15 +570,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         statusElement.className = "status";
-        statusElement.textContent = "Your turn! Choose a square.";
-
-        renderBoard();
-    }
+        statusElement.textContent = gameModeSelect.value === "twoPlayer"
+        ? "Player 1's turn! (X)"
+        : "Your turn! Choose a square.";
+            renderBoard();
+        }
 
     restartButton.addEventListener("click", restartGame);
 
     difficultySelect.addEventListener("change", () => {
-        difficulty = difficultySelect.value;
+    difficulty = difficultySelect.value;
+    restartGame();
+    });
+
+    // Switch between one-player and two-player modes
+    gameModeSelect.addEventListener("change", () => {
+        const twoPlayerMode = gameModeSelect.value === "twoPlayer";
+
+        difficultySelect.style.display = twoPlayerMode ? "none" : "inline-block";
+        difficultyLabel.style.display = twoPlayerMode ? "none" : "inline-block";
+
         restartGame();
     });
 
